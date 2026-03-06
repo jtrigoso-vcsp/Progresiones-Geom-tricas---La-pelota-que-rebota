@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Matemático de Rebotes - VCSP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        :root {
+            --vcdark-blue: #2C4870;
+            --vcteal: #1E5A54;
+            --vclight-blue: #4A8ABD;
+            --vcyellow: #F4CA52;
+            --vcgrey: #F2F2F2;
+        }
+
+        body { 
+            background-color: var(--vcgrey); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: var(--vcdark-blue);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vc-blue-bg { background-color: var(--vcdark-blue); }
+        .vc-teal-bg { background-color: var(--vcteal); }
+        .vc-yellow-bg { background-color: var(--vcyellow); }
+        
+        .math-card {
+            background-color: var(--vcdark-blue);
+            color: white;
+            border-bottom: 4px solid var(--vcyellow);
+        }
+
+        .glass-panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-top: 5px solid var(--vcteal);
+        }
+
+        .custom-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 50px;
+            outline: none;
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--vcyellow);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid var(--vcdark-blue);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .btn-vc {
+            background-color: var(--vcteal);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-vc:hover {
+            background-color: var(--vcdark-blue);
+            transform: translateY(-1px);
+        }
+
+        .step-card {
+            background: white;
+            border-left: 4px solid var(--vclight-blue);
+            transition: transform 0.2s;
+        }
+        .step-card:hover {
+            transform: translateX(5px);
+        }
+
+        .yellow-text { color: var(--vcyellow); }
+        .blue-text { color: var(--vclight-blue); }
+        .teal-text { color: var(--vcteal); }
+        
+        main { flex: 1; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <main class="max-w-6xl mx-auto w-full">
+        <!-- Encabezado -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b-2 border-[#2C4870]/20 pb-8">
+            <div>
+                <h1 class="text-4xl font-extrabold text-[#2C4870] tracking-tight mb-2">Simulador de Matemáticas <span class="teal-text">VCSP</span></h1>
+                <p class="text-stone-500 font-medium text-lg">Progresiones Geométricas - La pelota que rebota</p>
+            </div>
+            <button id="reanimateBtn" class="flex items-center gap-2 btn-vc px-8 py-3 rounded-xl font-bold shadow-md active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                </svg>
+                Reiniciar Animación
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Columna Izquierda -->
+            <div class="lg:col-span-8 space-y-8">
+                <!-- Gráfica -->
+                <div class="glass-panel p-6 rounded-2xl shadow-sm relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-extrabold text-[#2C4870] uppercase text-xs tracking-widest">Trayectoria de la Pelota</h3>
+                        <div class="flex gap-4 text-[10px] font-bold">
+                            <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full vc-yellow-bg"></div> Estela</span>
+                            <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full vc-blue-bg"></div> Pelota</span>
+                        </div>
+                    </div>
+                    <canvas id="bounceCanvas" class="w-full h-64 md:h-96"></canvas>
+                </div>
+
+                <!-- Tabla de Datos -->
+                <div class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div class="px-8 py-4 vc-blue-bg text-white">
+                        <h3 class="font-bold uppercase text-xs tracking-widest text-center">Registro Detallado de Rebotes</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border-collapse">
+                            <thead>
+                                <tr class="text-stone-400 text-[11px] uppercase tracking-widest font-bold border-b border-stone-100">
+                                    <th class="px-4 py-4">Fase</th>
+                                    <th class="px-4 py-4 text-[#4A8ABD]">Subida (m)</th>
+                                    <th class="px-4 py-4 text-[#1E5A54]">Bajada (m)</th>
+                                    <th class="px-4 py-4 text-[#2C4870]">Distancia Acumulada</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTable" class="text-sm font-medium">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Resolución -->
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-extrabold text-[#2C4870]">Resultados del Análisis</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="step-card p-6 rounded-xl shadow-sm">
+                            <h4 class="font-bold text-[#1E5A54] text-sm uppercase mb-2">Altura en 5° bote</h4>
+                            <p class="text-2xl font-black text-[#2C4870]" id="ans-a">---</p>
+                        </div>
+                        <div class="step-card p-6 rounded-xl shadow-xl border-l-[#F4CA52]">
+                            <h4 class="font-bold text-[#1E5A54] text-sm uppercase mb-2">Distancia antes del 5°</h4>
+                            <p class="text-2xl font-black text-[#2C4870]" id="ans-b">---</p>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-xl vc-teal-bg text-white shadow-lg">
+                        <h4 class="font-bold text-[#F4CA52] text-sm uppercase mb-2">Pregunta Crítica (Inciso e)</h4>
+                        <p class="text-lg font-medium italic mb-2">Primera pelota con distancia total < 25m:</p>
+                        <p class="text-3xl font-black" id="ans-e">Calculando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-stone-200 sticky top-10">
+                    <h3 class="text-lg font-bold text-[#2C4870] mb-6 border-b border-[#F2F2F2] pb-2">Configuración</h3>
+                    
+                    <div class="mb-8">
+                        <div class="flex justify-between mb-4">
+                            <label class="text-sm font-bold text-[#1E5A54]">Altura Inicial (\(x\))</label>
+                            <span id="heightDisplay" class="text-xl font-black text-[#2C4870]">10.0 m</span>
+                        </div>
+                        <input type="range" id="heightSlider" min="2" max="18" step="0.1" value="10" class="custom-slider">
+                    </div>
+
+                    <div class="p-6 rounded-xl bg-[#F2F2F2] border-2 border-[#2C4870]/10 text-center mb-6">
+                        <p class="text-[10px] font-black text-[#4A8ABD] uppercase tracking-widest mb-1">Distancia Total (\(\delta_1\))</p>
+                        <p class="text-4xl font-black text-[#2C4870]" id="totalDisplay">50.00 m</p>
+                    </div>
+
+                    <div class="math-card p-6 rounded-xl text-sm">
+                        <h4 class="font-bold yellow-text mb-4 text-center">Fórmula Institucional</h4>
+                        \[ \delta = x + 2\sum_{n=1}^{\infty} x(2/3)^n \]
+                        <div class="mt-4 pt-4 border-t border-white/10 text-center">
+                            <span class="text-xs text-white/70">Simplificación:</span>
+                            <p class="text-xl font-black yellow-text">\[ \delta = 5x \]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="mt-20 py-8 border-t border-[#2C4870]/10 text-center">
+        <p class="text-[#2C4870] font-semibold text-sm tracking-wide">
+            2026 | Aplicación desarrollada por <span class="teal-text">Javier Trigoso</span>, con Gemini
+        </p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('bounceCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('heightSlider');
+        const hDisplay = document.getElementById('heightDisplay');
+        const tDisplay = document.getElementById('totalDisplay');
+        const dataTable = document.getElementById('dataTable');
+        const reanimateBtn = document.getElementById('reanimateBtn');
+
+        const ansA = document.getElementById('ans-a');
+        const ansB = document.getElementById('ans-b');
+        const ansE = document.getElementById('ans-e');
+
+        const R = 2/3;
+        const G = 9.8;
+        let animationPoints = [];
+        let animationIdx = 0;
+        let requestID;
+
+        function update() {
+            const h0 = parseFloat(slider.value);
+            hDisplay.textContent = h0.toFixed(1) + " m";
+            const delta1 = h0 * 5;
+            tDisplay.textContent = delta1.toFixed(2) + " m";
+            
+            setupCanvas();
+            calculatePoints(h0);
+            updateTable(h0);
+            resolveExercise(h0, delta1);
+            startAnimation();
+        }
+
+        function setupCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * devicePixelRatio;
+            canvas.height = rect.height * devicePixelRatio;
+            ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
+
+        function calculatePoints(h0) {
+            const w = canvas.width / devicePixelRatio;
+            const h = canvas.height / devicePixelRatio;
+            const padding = 40;
+            const floorY = h - padding;
+            const hScale = (h - padding * 2) / 20;
+            const tScale = (w - padding * 2) / 12;
+
+            animationPoints = [];
+            let currentX = padding;
+            
+            let tFall = Math.sqrt(2 * h0 / G);
+            for(let t=0; t<=tFall; t+=0.04) {
+                animationPoints.push({
+                    x: currentX + (t * tScale),
+                    y: floorY - ((h0 - 0.5 * G * t * t) * hScale)
+                });
+            }
+            currentX += tFall * tScale;
+            let currentH = h0;
+
+            for(let i=1; i<=8; i++) {
+                currentH *= R;
+                if (currentH < 0.05) break;
+                let v0 = Math.sqrt(2 * G * currentH);
+                let tTotal = 2 * v0 / G;
+                for(let t=0; t<=tTotal; t+=0.04) {
+                    let h_t = v0 * t - 0.5 * G * t * t;
+                    animationPoints.push({
+                        x: currentX + (t * tScale),
+                        y: floorY - (Math.max(0, h_t) * hScale)
+                    });
+                }
+                currentX += tTotal * tScale;
+            }
+        }
+
+        function resolveExercise(h0, d1) {
+            const h5 = h0 * Math.pow(R, 5);
+            ansA.textContent = `${h5.toFixed(4)} m`;
+
+            let distB = h0;
+            for(let i=1; i<5; i++) {
+                distB += 2 * (h0 * Math.pow(R, i));
+            }
+            ansB.textContent = `${distB.toFixed(2)} m`;
+
+            const d2 = 9.56 * 5;
+            const diff = d2 - d1;
+            
+            if (diff >= 0) {
+                ansE.textContent = "No hay convergencia";
+            } else {
+                const nRequired = (25 - d1) / diff + 1;
+                const n = Math.ceil(nRequired);
+                ansE.textContent = n > 0 ? `Pelota nº ${n}` : "Pelota nº 1 cumple";
+            }
+        }
+
+        function startAnimation() {
+            cancelAnimationFrame(requestID);
+            animationIdx = 0;
+            animate();
+        }
+
+        function animate() {
+            const w = canvas.width / devicePixelRatio;
+            const h = canvas.height / devicePixelRatio;
+            const padding = 40;
+            const floorY = h - padding;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Guías en Gris Institucional
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            for(let i=1; i<=20; i+=4) {
+                let y = floorY - (i * ((h - padding * 2) / 20));
+                ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(w - padding, y); ctx.stroke();
+            }
+
+            // Suelo en Azul Primario
+            ctx.beginPath();
+            ctx.strokeStyle = '#2C4870';
+            ctx.lineWidth = 3;
+            ctx.moveTo(padding, floorY);
+            ctx.lineTo(w - padding, floorY);
+            ctx.stroke();
+
+            // Trayectoria en Amarillo Oro
+            if (animationPoints.length > 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#F4CA52';
+                ctx.moveTo(animationPoints[0].x, animationPoints[0].y);
+                for(let i=0; i <= animationIdx && i < animationPoints.length; i++) {
+                    ctx.lineTo(animationPoints[i].x, animationPoints[i].y);
+                }
+                ctx.stroke();
+            }
+
+            // Pelota en Azul Primario
+            if (animationPoints.length > 0 && animationIdx < animationPoints.length) {
+                const p = animationPoints[animationIdx];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#2C4870';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                animationIdx += 2; 
+                requestID = requestAnimationFrame(animate);
+            } else if (animationPoints.length > 0) {
+                const p = animationPoints[animationPoints.length - 1];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#2C4870';
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        function updateTable(h0) {
+            let html = '';
+            let currentH = h0;
+            let totalDist = h0;
+            
+            // Estado Inicial (Gris de fondo)
+            html += `
+                <tr class="border-b border-stone-100 bg-stone-50/50">
+                    <td class="px-4 py-4 font-bold text-stone-400 italic">Caída Libre</td>
+                    <td class="px-4 py-4 text-stone-200">---</td>
+                    <td class="px-4 py-4 font-bold text-[#1E5A54]">${h0.toFixed(2)}</td>
+                    <td class="px-4 py-4 font-black text-[#2C4870]">${h0.toFixed(2)} m</td>
+                </tr>
+            `;
+
+            for(let i=1; i<=6; i++) {
+                currentH *= R;
+                totalDist += currentH;
+                let afterUp = totalDist;
+                totalDist += currentH;
+                let afterDown = totalDist;
+
+                html += `
+                    <tr class="border-b border-stone-50 hover:bg-[#F2F2F2] transition-colors">
+                        <td class="px-4 py-4 font-bold text-stone-500">Bote ${i}</td>
+                        <td class="px-4 py-4 text-[#4A8ABD] font-extrabold">${currentH.toFixed(2)}</td>
+                        <td class="px-4 py-4 text-[#1E5A54] font-extrabold">${currentH.toFixed(2)}</td>
+                        <td class="px-4 py-4">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[9px] text-[#4A8ABD] font-bold uppercase tracking-tight">Post-Subida: ${afterUp.toFixed(2)}m</span>
+                                <span class="font-black text-[#2C4870] text-base">${afterDown.toFixed(2)} m</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            dataTable.innerHTML = html;
+        }
+
+        slider.addEventListener('input', update);
+        reanimateBtn.addEventListener('click', update);
+        window.addEventListener('resize', update);
+        
+        update();
+    </script>
+</body>
+</html>
